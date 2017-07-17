@@ -1,0 +1,127 @@
+<html>
+<head>
+    <meta charset="utf-8">    
+    <style>
+        .bar {
+          fill: steelblue;
+        }
+
+        .bar:hover {
+          fill: brown;
+        }
+
+        .axis--x path {
+          display: none;
+        }
+        
+        .text {
+            fill: #444;
+        }
+        
+        .header {
+            font-size: 24px;
+            text-align: center;
+        }
+        
+        div.header {
+            width: 900px;
+            max-width: 900px;
+        }
+
+    </style>
+    
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>window.d3     || document.write('<script src="lib/d3.v4.min.js">\x3C/script>')</script>    
+    <script>window.jQuery || document.write('<script src="lib/jquery-3.2.1.min.js">\x3C/script>')</script>
+    
+    <script>        
+        // global variables
+        var g = {};
+        g.data = [];        
+        g.width = 0;
+        g.height = 0;
+        g.svg = {};
+        g.margin = { top: 20, right: 20, bottom: 50, left: 75 }; 
+        g.debug = true;
+    
+        // main - set some global vars for later & load data
+        $(document).ready(function () {
+            g.svg = d3.select('svg');
+            g.width = g.svg.attr("width") - g.margin.left - g.margin.right;
+            g.height = g.svg.attr("height") - g.margin.top - g.margin.bottom;
+            d3.csv("calgarycensus2016_20170712.csv", function (csv) {
+                g.data = csv;
+                !g.debug || console.log("CSV Loaded");
+                setupbarchart();
+            });
+        });
+        
+        
+        // create the neighbourhood population bar chart
+        // roughly based on https://bost.ocks.org/mike/bar/3/
+        function setupbarchart() {
+            // we only want results from these neighbourhoods
+            var targetneighbourhoods = ['EDGEMONT', 'ACADIA', 'BANFF TRAIL', 'CRESCENT HEIGHTS','PANORAMA HILLS'];
+            
+            // filter the dataset
+            var ds = [];
+            g.data.forEach(function(a) {
+                if (targetneighbourhoods.indexOf(a.NAME)>=0)
+                    ds.push(a);
+            });
+            
+            var grp = g.svg.append('g')
+                .attr("transform","translate(" + g.margin.left + "," + g.margin.top + ")");
+            
+            // setup scales
+            var x = d3.scaleBand().rangeRound([0, g.width]).padding(.05)
+                .domain(targetneighbourhoods);
+            var y = d3.scaleLinear().rangeRound([g.height,0])
+                .domain([0, d3.max(ds, function(d) { return parseInt(d.RES_CNT); })]);
+            
+            // draw x axis
+            grp.append('g')
+                .attr("class","axis axis--x")
+                .attr("transform", "translate(0," + g.height + ")")
+                .call(d3.axisBottom(x))
+            // add a label
+            g.svg.append('text')
+                .attr("transform", "translate(" + (g.width/2) + ", " + (g.height + g.margin.top + 50) + ")")
+                .attr('dx', '1em')
+                .attr('text-anchor','left')
+                .text("Neighbourhood");
+            
+            // draw y axis
+            grp.append("g")
+                .attr("class","axis axis--y")
+                .call(d3.axisLeft(y).ticks(10))
+            // add a label
+            g.svg.append("text")
+                .attr("transform","rotate(-90)")
+                .attr("y",0)
+                .attr("x",0 - (g.height / 2))
+                .attr("dy", "1em")
+                .attr("text-anchor", "middle")
+                .text("Population");
+                                
+            // draw the bars
+            grp.selectAll('.bar')
+                .data(ds)
+                .enter().append('rect')
+                    .attr("class", "bar")
+                    .attr("x", function(d) { return x(d.NAME); })
+                    .attr("y", function(d) { return y(parseInt(d.RES_CNT)); })
+                    .attr("width", x.bandwidth())
+                    .attr("name", function(d) { return d.NAME; })
+                    .attr("height", function(d) { return g.height - y(parseInt(d.RES_CNT)); });
+
+        }
+    
+    </script>
+</head>
+<body>
+    <div class=header>Population of Five Calgary Neighbourhoods</div>
+    <svg width=900 height=500></svg>    
+</body>
+</html>

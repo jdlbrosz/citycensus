@@ -1,0 +1,76 @@
+<html>
+<head>
+    <meta charset="utf-8">    
+    <link rel=stylesheet href=style.css>
+    
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script>window.d3     || document.write('<script src="lib/d3.v4.min.js">\x3C/script>')</script>    
+    <script>window.jQuery || document.write('<script src="lib/jquery-3.2.1.min.js">\x3C/script>')</script>
+    
+    <script src="stacked.js"></script>
+    <script src="parallel.js"></script>
+    
+    <script>        
+        // global variables
+        var g = {};
+        g.data = [];        
+        g.width = 0;
+        g.height = 0;
+        g.svg = {};
+        g.margin = { top: 20, right: 100, bottom: 50, left: 100 }; 
+        g.stackedchart = true;
+    
+        // main - set some global vars for later & load data as well as first chart
+        $(document).ready(function () {
+            g.svg = d3.select('svg');
+            g.width = g.svg.attr("width") - g.margin.left - g.margin.right;
+            g.height = g.svg.attr("height") - g.margin.top - g.margin.bottom;
+            d3.csv("calgarycensus2016_20170712.csv", function (csv) {
+                g.data = csv;
+                setup_stacked();
+                //setup_parallel();
+            });
+        });
+                
+        // swap between the charts
+        function toggle() {
+            d3.selectAll("svg > *").remove(); // clear out old chart
+            g.stackedchart = !g.stackedchart;
+            
+            if (g.stackedchart)                
+            {
+                setup_stacked();
+                // update the UI buttons
+                $('.button#stacked').removeClass('inactive').addClass('active');
+                $('.button#parallel').removeClass('active').addClass('inactive');
+            }
+            else
+            {
+                setup_parallel();
+                // update the UI buttons
+                $('.button#parallel').removeClass('inactive').addClass('active');
+                $('.button#stacked').removeClass('active').addClass('inactive');
+                
+            }
+        }
+             
+        // utility function to find attr with value within array of objects
+        function findWithinArray(array, attr, value) {
+            for (var i=0; i<array.length; i++)
+                if (array[i][attr] == value)
+                    return i;
+            return -1;
+        }
+    
+    </script>
+</head>
+<body>
+    <div class=header id=title>Population of Calgary's Sectors</div>
+    <svg width=1200 height=550></svg>    
+    <div style="margin-top: 40px">
+        <span class="button active" onclick="toggle();" id="stacked">City Sectors</span>
+        <span class="button inactive" onclick="toggle();" id="parallel">Community Structures</span>
+    </div>
+</body>
+</html>
